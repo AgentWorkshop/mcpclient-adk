@@ -8,6 +8,9 @@
       body {
         font-family: Arial, sans-serif;
         line-height: 1.6;
+        margin: 10px;
+        height: 100vh;
+        box-sizing: border-box;
       }
 
       /* Style for the header container (logo + title) */
@@ -50,7 +53,7 @@
       }
 
       #messages {
-        height: 800px;
+        height: calc(100vh - 150px); /* 動態計算高度，適應窗口 */
         overflow-y: auto;
         border: 1px solid #ccc;
         padding: 10px;
@@ -217,15 +220,24 @@
         title="Agent Development Kit" />
       <h1>ADK Agent Integrated with MCP</h1>
     </div>
-
-    <div id="messages"></div>
-    <br />
-
-    <form id="messageForm">
+    
+    <div class="example-questions" style="margin: 10px 0; padding: 10px; background-color: #f0f8ff; border-radius: 5px; border-left: 4px solid #0078d7;">
+      <p style="font-weight: bold; margin-bottom: 5px;">示例問題：</p>
+      <ul style="margin: 0; padding-left: 20px;">
+        <li>請給我一個隨機的雞尾酒推薦</li>
+        <li>告訴我關於瑪格麗特酒的資訊</li>
+        <li>有哪些以伏特加為基底的雞尾酒？</li>
+      </ul>
+    </div>
+    
+    <form id="messageForm" style="margin-bottom: 10px;">
       <label for="message">Message:</label>
       <input type="text" id="message" name="message" style="width: 80%" />
       <button type="submit" id="sendButton" disabled>Send</button>
     </form>
+    
+    <div id="messages"></div>
+
   </body>
 
   <script>
