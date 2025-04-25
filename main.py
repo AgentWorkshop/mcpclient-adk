@@ -37,7 +37,7 @@ async def get_agent_async(server_params):
     root_agent = LlmAgent(
         model="gemini-2.5-pro-preview-03-25",
         name="ai_assistant",
-        instruction="You're a helpful assistant. Use tools to get information to answer user questions, please format your answer in markdown format.",
+        instruction="You're a helpful assistant. Use tools to get information to answer user questions. Always respond in Traditional Chinese (繁體中文). Please format your answer in markdown format.",
         tools=tools,
     )
     return root_agent, exit_stack
