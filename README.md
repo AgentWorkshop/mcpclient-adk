@@ -7,40 +7,74 @@ Screenshot:
 
 ![ADK Screenshot](https://storage.googleapis.com/github-repo/generative-ai/gemini/mcp/adk_app.png)
   
-This example demonstrates how you can chat with the app to retrieve cocktail details from [The Cocktail DB](https://www.thecocktaildb.com/) website using a local MCP server
+This example demonstrates how you can chat with the app to retrieve cocktail details from [The Cocktail DB](https://www.thecocktaildb.com/) website using a local MCP server.
 
-## Create & Activate Virtual Environment (Recommended)
+## Project Structure
+
+```none
+your_project_folder/
+├── main.py
+├── .env
+├── .env.sample
+├── Makefile             # Automation script
+├── requirements.txt
+├── mcp_server/
+│   └── cocktail.py
+├── README.md
+└── static/
+    └── index.html
+```
+
+## Features
+
+- **Traditional Chinese responses**: System is configured to always respond in Traditional Chinese
+- **Streaming responses**: Real-time display of generated responses for better user experience
+- **Cocktail information queries**: Support for various cocktail-related queries
+- **Intuitive user interface**: Optimized frontend design with example questions
+- **Automation scripts**: Simplified installation and running process through Makefile
+
+## Getting Started
+
+### Using Makefile (Recommended)
+
+We provide a Makefile to simplify the setup and running process:
+
+```sh
+# Check environment setup
+make init
+
+# Install dependencies
+make install
+
+# Run the application and automatically open browser
+make run-local
+
+# Or execute all steps at once
+make all
+or
+make
+```
+
+### Manual Setup
+
+#### Create & Activate Virtual Environment (Recommended)
 
 ```sh
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate  # Linux/Mac
+# or
+.venv\Scripts\activate  # Windows
 ```
 
-## Install ADK
+#### Install Dependencies
 
 ```sh
-pip install google-adk fastapi
+pip install -r requirements.txt
 ```
 
-Project Structure
+#### Configure Environment Variables
 
-```none
-your_project_folder/  # Project folder
-|── adk_mcp_app
-    ├── main.py
-    ├── .env
-    ├── mcp_server
-    │   └── cocktail.py
-    ├── README.md
-    └── static
-        └── index.html
-```
-
-## Run the app
-
-Start the Fast API: Run the following command within the `adk_mcp_app` folder
-
-1. Create a .env file with the following contents:
+Copy `.env.sample` to `.env` and fill in your API key and project information:
 
 ```sh
 # Choose Model Backend: 0 -> Gemini Developer API, 1 -> Vertex AI
@@ -54,8 +88,28 @@ GOOGLE_CLOUD_PROJECT="<your project id>"
 GOOGLE_CLOUD_LOCATION="us-central1"
 ```
 
-1. Run the below command to start the app:
+#### Run the Application
 
 ```sh
 uvicorn main:app --reload
 ```
+
+#### Access the Application
+
+Open [http://localhost:8000](http://localhost:8000) in your browser
+
+## Usage
+
+After starting the application, you can:
+
+1. View example questions to understand what types of content you can ask about
+2. Enter your question in the input field
+3. Click the "Send" button to send your question
+4. Watch the streaming response being generated
+
+## Technical Details
+
+- **Backend**: FastAPI and Google ADK
+- **Frontend**: HTML, CSS, and JavaScript
+- **Model**: Gemini 2.5 Pro
+- **Communication**: WebSocket for streaming responses
