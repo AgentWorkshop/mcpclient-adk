@@ -3,6 +3,30 @@
 
 This web application was developed using Google ADK (Agent Development Kit) and MCP (Model Context Protocol). Specifically, the Agent relies on the Google ADK. A local MCP server instance, established using custom server code designed for cocktail data management, facilitates data retrieval. The web application acts as an MCP client to fetch cocktail information via this local server.
 
+## System Architecture
+
+```mermaid
+graph LR
+    User[User] <--> DemoApp[DemoApp]
+    DemoApp <--> |WebSocket| Agent[ADK Agent]
+    Agent <--> |MCP Protocol| MCPServer[MCP Server]
+    MCPServer <--> |API Calls| CocktailAPI[(The Cocktail API)]
+
+    classDef user fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef webapp fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef agent fill:#bfb,stroke:#333,stroke-width:2px;
+    classDef server fill:#fbb,stroke:#333,stroke-width:2px;
+    classDef db fill:#ddd,stroke:#333,stroke-width:2px;
+
+    class User user;
+    class WebApp webapp;
+    class Agent agent;
+    class MCPServer server;
+    class CocktailAPI db;
+```
+
+The diagram above illustrates the relationship between the user, web application, ADK agent, MCP server, and the external Cocktail API. The user interacts with the web application, which communicates with the ADK agent via WebSocket. The agent uses the MCP protocol to interact with the MCP server, which in turn makes API calls to The Cocktail API to retrieve information.
+
 Screenshot:
 
 <!-- ![ADK Screenshot](https://storage.googleapis.com/github-repo/generative-ai/gemini/mcp/adk_app.png) -->
