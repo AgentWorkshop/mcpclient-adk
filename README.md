@@ -5,7 +5,8 @@ This web application was developed using Google ADK (Agent Development Kit) and 
 
 Screenshot:
 
-![ADK Screenshot](https://storage.googleapis.com/github-repo/generative-ai/gemini/mcp/adk_app.png)
+<!-- ![ADK Screenshot](https://storage.googleapis.com/github-repo/generative-ai/gemini/mcp/adk_app.png) -->
+![ADK Screenshot](static/adkmcp_2x.gif)
   
 This example demonstrates how you can chat with the app to retrieve cocktail details from [The Cocktail DB](https://www.thecocktaildb.com/) website using a local MCP server.
 
