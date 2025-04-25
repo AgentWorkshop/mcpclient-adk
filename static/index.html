@@ -326,40 +326,94 @@
           }
         };
 
+        // 用於跟踪當前流式響應的元素
+        let currentStreamingElement = null;
+        
         webSocketInstance.onmessage = function (event) {
           // console.log("Received raw data:", event.data); // Keep for debug if needed
           try {
             const packet = JSON.parse(event.data);
-            // console.log("Received parsed packet:", packet); // Keep for debug
+            console.log("Received parsed packet:", packet); // 保留調試信息
 
             if (packet.turn_complete && packet.turn_complete === true) {
               console.log("Turn complete signal received.");
               return;
             }
+            
+            // 處理錯誤消息
+            if (packet.error) {
+              addStatusMessage(packet.message, "error-text");
+              return;
+            }
 
-            if (packet.message) {
-              const messageElement = document.createElement("p");
-              messageElement.classList.add("server-message-block");
-
-              try {
-                const htmlContent = marked.parse(packet.message);
-                messageElement.innerHTML = htmlContent;
-              } catch (e) {
-                console.error("Error parsing Markdown:", e);
-                const textNode = document.createTextNode(packet.message);
-                messageElement.appendChild(textNode);
-                addStatusMessage(
-                  `Markdown parsing error: ${e.message}`,
-                  "error-text",
-                );
+            if (packet.message !== undefined) { // 使用 !== undefined 以允許空字符串
+              // 流式響應處理
+              if (packet.streaming === true) {
+                // 如果是流式響應的第一部分，創建新元素
+                if (!currentStreamingElement) {
+                  currentStreamingElement = document.createElement("p");
+                  currentStreamingElement.classList.add("server-message-block");
+                  currentStreamingElement.setAttribute("data-streaming", "true");
+                  
+                  if (messagesDiv) {
+                    messagesDiv.appendChild(currentStreamingElement);
+                  } else {
+                    console.error("Messages container not found in onmessage!");
+                    return;
+                  }
+                }
+                
+                // 將新內容添加到當前流式元素
+                try {
+                  // 累積內容
+                  const currentContent = currentStreamingElement.getAttribute("data-content") || "";
+                  const newContent = currentContent + packet.message;
+                  currentStreamingElement.setAttribute("data-content", newContent);
+                  
+                  // 嘗試解析為Markdown
+                  const htmlContent = marked.parse(newContent);
+                  currentStreamingElement.innerHTML = htmlContent;
+                } catch (e) {
+                  console.error("Error parsing Markdown during streaming:", e);
+                  // 如果Markdown解析失敗，使用純文本
+                  const currentText = currentStreamingElement.textContent || "";
+                  currentStreamingElement.textContent = currentText + packet.message;
+                }
+                
+                // 滾動到底部
+                if (messagesDiv) {
+                  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                }
+              } 
+              // 流式響應完成
+              else if (packet.complete === true) {
+                console.log("Streaming response complete");
+                currentStreamingElement = null; // 重置流式元素引用
               }
+              // 非流式響應（兼容舊版本）
+              else if (!packet.streaming) {
+                const messageElement = document.createElement("p");
+                messageElement.classList.add("server-message-block");
 
-              if (messagesDiv) {
-                messagesDiv.appendChild(messageElement);
-                // console.log("Added new server message block."); // Less verbose logging
-                messagesDiv.scrollTop = messagesDiv.scrollHeight;
-              } else {
-                console.error("Messages container not found in onmessage!");
+                try {
+                  const htmlContent = marked.parse(packet.message);
+                  messageElement.innerHTML = htmlContent;
+                } catch (e) {
+                  console.error("Error parsing Markdown:", e);
+                  const textNode = document.createTextNode(packet.message);
+                  messageElement.appendChild(textNode);
+                  addStatusMessage(
+                    `Markdown parsing error: ${e.message}`,
+                    "error-text",
+                  );
+                }
+
+                if (messagesDiv) {
+                  messagesDiv.appendChild(messageElement);
+                  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                } else {
+                  console.error("Messages container not found in onmessage!");
+                }
               }
             } else {
               console.log("Received packet without 'message' field:", packet);

@@ -49,7 +49,8 @@ ct_server_params = StdioServerParameters(
 )
 
 
-async def run_agent(server_params, session_id, question):
+async def run_agent(server_params, session_id, question, websocket=None):
+    """Run agent with optional streaming to websocket."""
     query = question
     print("[user]: ", query)
     content = types.Content(role="user", parts=[types.Part(text=query)])
@@ -65,28 +66,46 @@ async def run_agent(server_params, session_id, question):
     )
 
     response = []
-    async for event in events_async:
-        if event.content.role == "model" and event.content.parts[0].text:
-            print("[agent]:", event.content.parts[0].text)
-            response.append(event.content.parts[0].text)
-
-    await exit_stack.aclose()
+    # 用於跟踪上一次發送的文本長度
+    last_sent_length = 0
+    current_response = ""
+    
+    try:
+        async for event in events_async:
+            if event.content.role == "model" and event.content.parts[0].text:
+                text_chunk = event.content.parts[0].text
+                print("[agent]:", text_chunk)
+                response.append(text_chunk)
+                
+                # 如果提供了websocket，則流式發送
+                if websocket:
+                    current_response += text_chunk
+                    # 只發送新增的部分
+                    new_text = current_response[last_sent_length:]
+                    if new_text.strip():
+                        await websocket.send_text(json.dumps({"message": new_text, "streaming": True}))
+                        last_sent_length = len(current_response)
+                        await asyncio.sleep(0.01)  # 小延遲以避免過快發送
+    finally:
+        # 確保在任何情況下都關閉exit_stack
+        await exit_stack.aclose()
+        
+        # 如果使用流式傳輸，發送完成標記
+        if websocket and response:
+            await websocket.send_text(json.dumps({"message": "", "streaming": False, "complete": True}))
+    
     return response
 
 
 async def run_adk_agent_async(websocket, server_params, session_id):
-    """Client to agent communication"""
+    """Client to agent communication with streaming support"""
     try:
         # Your existing setup for the agent might be here
         logging.info(f"Agent task started for session {session_id}")
         while True:
             text = await websocket.receive_text()
-            response = await run_agent(server_params, session_id, text)
-            if not response:
-                continue
-            # Send the text to the client
-            ai_message = "\n".join(response)
-            await websocket.send_text(json.dumps({"message": ai_message}))
+            # 直接將websocket傳遞給run_agent以啟用流式傳輸
+            await run_agent(server_params, session_id, text, websocket)
             await asyncio.sleep(0)
 
     except WebSocketDisconnect:
@@ -97,6 +116,11 @@ async def run_adk_agent_async(websocket, server_params, session_id):
         logging.error(
             f"Error in agent task for session {session_id}: {e}", exc_info=True
         )
+        # 嘗試向客戶端發送錯誤消息
+        try:
+            await websocket.send_text(json.dumps({"message": f"發生錯誤: {str(e)}", "error": True}))
+        except:
+            pass  # 如果無法發送錯誤消息，則忽略
     finally:
         logging.info(f"Agent task ending for session {session_id}")
 
