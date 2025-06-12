@@ -1,0 +1,12 @@
+Dockerfile
+.dockerignore
+.git
+.gitignore
+*.pyc
+*.pyo
+__pycache__
+.env
+.env.sample
+tests/
+*.md
+Makefile
