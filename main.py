@@ -18,6 +18,8 @@ from starlette.websockets import WebSocketDisconnect
 
 load_dotenv()
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 APP_NAME = "ADK MCP example"
 session_service = InMemorySessionService()
 artifacts_service = InMemoryArtifactService()
@@ -34,8 +36,9 @@ async def get_tools_async(server_params):
 async def get_agent_async(server_params):
     """Creates an ADK Agent with tools from MCP Server."""
     tools, exit_stack = await get_tools_async(server_params)
+    gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-pro-preview-03-25")
     root_agent = LlmAgent(
-        model="gemini-2.5-pro-preview-03-25",
+        model=gemini_model,
         name="ai_assistant",
         instruction="You're a helpful assistant. Use tools to get information to answer user questions. Always respond in Traditional Chinese (繁體中文). Please format your answer in markdown format.",
         tools=tools,
@@ -52,7 +55,7 @@ ct_server_params = StdioServerParameters(
 async def run_agent(server_params, session_id, question, websocket=None):
     """Run agent with optional streaming to websocket."""
     query = question
-    print("[user]: ", query)
+    logging.info(f"[user][{session_id}]: {query}")
     content = types.Content(role="user", parts=[types.Part(text=query)])
     root_agent, exit_stack = await get_agent_async(server_params)
     runner = Runner(
@@ -74,7 +77,7 @@ async def run_agent(server_params, session_id, question, websocket=None):
         async for event in events_async:
             if event.content.role == "model" and event.content.parts[0].text:
                 text_chunk = event.content.parts[0].text
-                print("[agent]:", text_chunk)
+                logging.info(f"[agent][{session_id}]: {text_chunk}")
                 response.append(text_chunk)
                 
                 # 如果提供了websocket，則流式發送
@@ -89,6 +92,7 @@ async def run_agent(server_params, session_id, question, websocket=None):
     finally:
         # 確保在任何情況下都關閉exit_stack
         await exit_stack.aclose()
+        logging.info(f"[agent][{session_id}]: Full response assembled. Length: {len(''.join(response))}")
         
         # 如果使用流式傳輸，發送完成標記
         if websocket and response:
@@ -145,10 +149,9 @@ async def websocket_endpoint(websocket: WebSocket, session_id: int):
 
     # Wait for client connection
     await websocket.accept()
-    print(f"Client #{session_id} connected")
+    logging.info(f"Client #{session_id} connected")
 
     # Start agent session
-    session_id = str(session_id)
     session = session_service.create_session(
         app_name=APP_NAME, user_id=session_id, session_id=session_id, state={}
     )
@@ -161,4 +164,4 @@ async def websocket_endpoint(websocket: WebSocket, session_id: int):
     await asyncio.gather(agent_task)
 
     # Disconnected
-    print(f"Client #{session_id} disconnected")
+    logging.info(f"Client #{session_id} disconnected")
