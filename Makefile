@@ -1,4 +1,4 @@
-.PHONY: init install run-local check-env
+.PHONY: init install run-local check-env test
 
 # 默認目標
 all: init install run-local
@@ -37,11 +37,18 @@ run-local:
 	@echo "🚀 啟動本地服務器..."
 	@(sleep 2 && open http://localhost:8000) & uvicorn main:app --reload
 
+# 運行測試
+test:
+	@echo "🧪 運行測試..."
+	python -m pytest
+	@echo "✅ 測試完成"
+
 # 幫助信息
 help:
 	@echo "可用命令："
 	@echo "  make init       - 檢查 .env 文件是否存在且不包含默認值"
 	@echo "  make install    - 安裝 requirements.txt 中的依賴"
 	@echo "  make run-local  - 啟動本地服務器並自動打開瀏覽器"
+	@echo "  make test       - 運行單元測試"
 	@echo "  make all        - 執行以上所有命令"
 	@echo "  make help       - 顯示此幫助信息"
