@@ -2,6 +2,7 @@ from typing import Any, Dict, Optional
 
 import httpx
 from mcp.server.fastmcp import FastMCP
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 # Initialize FastMCP server
 mcp = FastMCP("cocktaildb")
@@ -11,6 +12,7 @@ API_BASE_URL = "https://www.thecocktaildb.com/api/json/v1/1/"
 
 
 # --- Helper Functions ---
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
 async def make_cocktaildb_request(
     endpoint: str, params: Optional[Dict[str, str]] = None
 ) -> Optional[Dict[str, Any]]:
@@ -126,7 +128,7 @@ async def list_cocktails_by_first_letter(letter: str) -> str:
     Args:
         letter: The first letter to search cocktails by (must be a single character).
     """
-    if len(letter) != 1 or not letter.isalpha():
+    if len(letter) != 1:
         return "Invalid input: Please provide a single letter."
     data = await make_cocktaildb_request("search.php", params={"f": letter.lower()})
     if data and data.get("drinks"):
